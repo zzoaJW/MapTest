@@ -28,7 +28,20 @@
         app:layout_constraintStart_toStartOf="parent" />
 
     <Button
-        android:id="@+id/btn_start"
+        android:id="@+id/btn_polyline"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginBottom="10dp"
+        android:background="#80000000"
+        android:minWidth="0dp"
+        android:minHeight="0dp"
+        android:text="선"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/btn_cirecle"
+        app:layout_constraintStart_toStartOf="@+id/btn_polygon" />
+
+    <Button
+        android:id="@+id/btn_start2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="20dp"
@@ -40,25 +53,51 @@
         app:layout_constraintTop_toTopOf="@+id/btn_current_posi" />
 
     <Button
-        android:id="@+id/btn_pause"
+        android:id="@+id/btn_cirecle"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginBottom="10dp"
+        android:background="#80000000"
+        android:minWidth="0dp"
+        android:minHeight="0dp"
+        android:text="원"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/btn_polygon"
+        app:layout_constraintStart_toStartOf="@+id/btn_polygon" />
+
+    <Button
+        android:id="@+id/btn_pause2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:background="#80000000"
         android:text="일시정지"
         android:textStyle="bold"
-        app:layout_constraintBottom_toBottomOf="@+id/btn_start"
-        app:layout_constraintStart_toEndOf="@+id/btn_start"
-        app:layout_constraintTop_toTopOf="@+id/btn_start" />
+        app:layout_constraintBottom_toBottomOf="@+id/btn_start2"
+        app:layout_constraintStart_toEndOf="@+id/btn_start2"
+        app:layout_constraintTop_toTopOf="@+id/btn_start2" />
 
     <Button
-        android:id="@+id/btn_end"
+        android:id="@+id/btn_polygon"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginBottom="10dp"
+        android:background="#80000000"
+        android:minWidth="0dp"
+        android:minHeight="0dp"
+        android:text="다각형"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/btn_current_posi"
+        app:layout_constraintStart_toStartOf="@+id/btn_current_posi" />
+
+    <Button
+        android:id="@+id/btn_end2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:background="#80000000"
         android:text="저장"
         android:textStyle="bold"
-        app:layout_constraintBottom_toBottomOf="@+id/btn_start"
-        app:layout_constraintStart_toEndOf="@+id/btn_pause"
-        app:layout_constraintTop_toTopOf="@+id/btn_start" />
+        app:layout_constraintBottom_toBottomOf="@+id/btn_pause2"
+        app:layout_constraintStart_toEndOf="@+id/btn_pause2"
+        app:layout_constraintTop_toTopOf="@+id/btn_pause2" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

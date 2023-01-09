@@ -48,8 +48,16 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             addMarkToMyCoo()
         }
 
-        binding.btnStart.setOnClickListener {
-            addPolylineFromMyCoo()
+        binding.btnPolyline.setOnClickListener {
+            addPolyline()
+        }
+
+        binding.btnCirecle.setOnClickListener {
+            addCircle()
+        }
+
+        binding.btnPolygon.setOnClickListener {
+            addPolygon()
         }
 
     }
@@ -114,14 +122,30 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
-    private fun addPolylineFromMyCoo(){
+    private fun addPolyline(){
         myGoogleMap!!.addPolyline(
             PolylineOptions()
                 .add(LatLng(35.1542634, 129.1204897))
                 .add(LatLng(37.5666805, 126.9784147))
-        ).color = Color.parseColor("#000000")
+                .add(LatLng(34.7603737, 127.6622221))
+                .add(LatLng(35.1542634, 129.1204897))
+        ).color = Color.parseColor("#ff0000")
 
         myGoogleMap!!.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(36.0, 128.0), 6f))
+    }
+
+    private fun addCircle(){
+        myGoogleMap!!.addCircle(
+            CircleOptions()
+                .center(LatLng(35.1542634, 129.1204897))
+                .radius(10000.0)
+        ).strokeColor = Color.parseColor("#0000ff")
+
+        myGoogleMap!!.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(35.1542634, 129.1204897), 8f))
+    }
+
+    private fun addPolygon(){
+
     }
 
 }
