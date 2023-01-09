@@ -2,6 +2,7 @@ package com.z0o0a.maptest
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.location.Geocoder
 import android.location.Location
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
@@ -21,6 +22,7 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.z0o0a.maptest.databinding.ActivityMainBinding
+import java.io.IOException
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var binding: ActivityMainBinding
@@ -46,28 +48,30 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
 
         binding.btnCurrentPosi.setOnClickListener {
-            // 현재 위치(위도,경도)에 마커 생성 + 카메라 이동
-
-            // 현재 위치(위도,경도) 토스트 메시지
             if(checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
                 && checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
                 fusedLocationClient.lastLocation
-                .addOnSuccessListener { location : Location? ->
-                    // Got last known location. In some rare situations this can be null.
-                    if (location != null) {
-                        setMyCoo(location.latitude, location.longitude)
+                    .addOnSuccessListener { location : Location? ->
+                        // Got last known location. In some rare situations this can be null.
+                        if (location != null) {
+                            setMyCoo(location.latitude, location.longitude)
 
-                        // 현재 위치 마커 생성
-                        myGoogleMap!!.addMarker(
-                            MarkerOptions()
-                                .position(myCoo)
-                                .title("내 위치")
-                        )
-                        // 현재 위치로 카메라 이동
-                        myGoogleMap!!.moveCamera(CameraUpdateFactory.newLatLngZoom(myCoo, 17f))
+                            try {
+                                val list = Geocoder(this).getFromLocation(myCoo.latitude, myCoo.longitude, 1)
 
+                                // 현재 위치 마커 생성
+                                myGoogleMap!!.addMarker(
+                                    MarkerOptions()
+                                        .position(myCoo)
+                                        .title("${list[0].adminArea} ${list[0].thoroughfare} ${list[0].postalCode}")
+                                )!!.showInfoWindow()
+                                // 현재 위치로 카메라 이동
+                                myGoogleMap!!.moveCamera(CameraUpdateFactory.newLatLngZoom(myCoo, 17f))
+                            }catch (e: IOException){
+                                Toast.makeText(this, "주소 가져오기 실패", Toast.LENGTH_LONG).show()
+                            }
+                        }
                     }
-                }
             }else if (checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED){
                 requestPermissions(arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION), 100)
             }else if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED){
@@ -75,6 +79,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             }else{
                 Toast.makeText(this, "현재 위치 불러오기 실패", Toast.LENGTH_LONG).show()
             }
+
         }
 
     }
