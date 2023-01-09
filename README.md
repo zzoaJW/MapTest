@@ -7,3 +7,4 @@ Android Studio (Kotlin)
 
 [정리글]  
 [[Android] Google Map 사용법 (1) - 기본](https://blog.naver.com/zoooa16/222979142797)  
+[[Android] Google Map 사용법 (2) - 위치 가져오기](https://blog.naver.com/zoooa16/222979192089)
