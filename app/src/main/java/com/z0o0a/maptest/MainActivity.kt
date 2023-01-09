@@ -2,6 +2,7 @@ package com.z0o0a.maptest
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.location.Geocoder
 import android.location.Location
 import android.os.Build
@@ -17,13 +18,11 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.Marker
-import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.gms.maps.model.*
 import com.z0o0a.maptest.databinding.ActivityMainBinding
 import java.io.IOException
 
+@RequiresApi(Build.VERSION_CODES.M)
 class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var binding: ActivityMainBinding
     private lateinit var fusedLocationClient: FusedLocationProviderClient
@@ -31,7 +30,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private var myGoogleMap : GoogleMap? = null
     private var myCoo = LatLng(0.0, 0.0)
 
-    @RequiresApi(Build.VERSION_CODES.M)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -45,41 +44,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         // 현재 위치
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
-
-
         binding.btnCurrentPosi.setOnClickListener {
-            if(checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
-                && checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
-                fusedLocationClient.lastLocation
-                    .addOnSuccessListener { location : Location? ->
-                        // Got last known location. In some rare situations this can be null.
-                        if (location != null) {
-                            setMyCoo(location.latitude, location.longitude)
+            addMarkToMyCoo()
+        }
 
-                            try {
-                                val list = Geocoder(this).getFromLocation(myCoo.latitude, myCoo.longitude, 1)
-
-                                // 현재 위치 마커 생성
-                                myGoogleMap!!.addMarker(
-                                    MarkerOptions()
-                                        .position(myCoo)
-                                        .title("${list[0].adminArea} ${list[0].thoroughfare} ${list[0].postalCode}")
-                                )!!.showInfoWindow()
-                                // 현재 위치로 카메라 이동
-                                myGoogleMap!!.moveCamera(CameraUpdateFactory.newLatLngZoom(myCoo, 17f))
-                            }catch (e: IOException){
-                                Toast.makeText(this, "주소 가져오기 실패", Toast.LENGTH_LONG).show()
-                            }
-                        }
-                    }
-            }else if (checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED){
-                requestPermissions(arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION), 100)
-            }else if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED){
-                requestPermissions(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 200)
-            }else{
-                Toast.makeText(this, "현재 위치 불러오기 실패", Toast.LENGTH_LONG).show()
-            }
-
+        binding.btnStart.setOnClickListener {
+            addPolylineFromMyCoo()
         }
 
     }
@@ -108,6 +78,50 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private fun setMyCoo(lat: Double, lon: Double){
         myCoo = LatLng(lat, lon)
+    }
+
+    private fun addMarkToMyCoo(){
+        if(checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+            && checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
+            fusedLocationClient.lastLocation
+                .addOnSuccessListener { location : Location? ->
+                    // Got last known location. In some rare situations this can be null.
+                    if (location != null) {
+                        setMyCoo(location.latitude, location.longitude)
+
+                        try {
+                            val list = Geocoder(this).getFromLocation(myCoo.latitude, myCoo.longitude, 1)
+
+                            // 현재 위치 마커 생성
+                            myGoogleMap!!.addMarker(
+                                MarkerOptions()
+                                    .position(myCoo)
+                                    .title("${list[0].adminArea} ${list[0].thoroughfare} ${list[0].postalCode}")
+                            )!!.showInfoWindow()
+                            // 현재 위치로 카메라 이동
+                            myGoogleMap!!.moveCamera(CameraUpdateFactory.newLatLngZoom(myCoo, 17f))
+                        }catch (e: IOException){
+                            Toast.makeText(this, "주소 가져오기 실패", Toast.LENGTH_LONG).show()
+                        }
+                    }
+                }
+        }else if (checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED){
+            requestPermissions(arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION), 100)
+        }else if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED){
+            requestPermissions(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 200)
+        }else{
+            Toast.makeText(this, "현재 위치 불러오기 실패", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun addPolylineFromMyCoo(){
+        myGoogleMap!!.addPolyline(
+            PolylineOptions()
+                .add(LatLng(35.1542634, 129.1204897))
+                .add(LatLng(37.5666805, 126.9784147))
+        ).color = Color.parseColor("#000000")
+
+        myGoogleMap!!.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(36.0, 128.0), 6f))
     }
 
 }
