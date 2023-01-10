@@ -6,12 +6,14 @@ import android.graphics.Color
 import android.location.Geocoder
 import android.location.Location
 import android.os.Build
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
-import android.view.LayoutInflater
 import android.widget.Toast
+import androidx.annotation.LongDef
 import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AppCompatActivity
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -30,6 +32,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private var myGoogleMap : GoogleMap? = null
     private var myCoo = LatLng(0.0, 0.0)
 
+    private var moveCooList : MutableList<LatLng> = mutableListOf()
+    val handler = Handler(Looper.getMainLooper())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,6 +44,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         // 구글 맵
         val mapFragment = supportFragmentManager.findFragmentById(R.id.google_map) as SupportMapFragment
         mapFragment.getMapAsync(this)
+
+        // 현재 위치 불러오기위한 권한 요청
+        checkLocationPermission()
 
         // 현재 위치
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
@@ -60,6 +67,34 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             addPolygon()
         }
 
+        binding.btnAllClear.setOnClickListener {
+            myGoogleMap!!.clear()
+        }
+
+        binding.btnZoomIn.setOnClickListener {
+            myGoogleMap!!.moveCamera(CameraUpdateFactory.zoomIn())
+        }
+
+        binding.btnZoomOut.setOnClickListener {
+            myGoogleMap!!.moveCamera(CameraUpdateFactory.zoomOut())
+        }
+
+        binding.btnStart.setOnClickListener {
+            routeStart()
+        }
+
+    }
+
+    // 현재 위치 불러오기 위한 권한 요청
+    private fun checkLocationPermission(){
+        when {
+            checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED -> {
+                requestPermissions(arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION), 100)
+            }
+            checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED -> {
+                requestPermissions(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 200)
+            }
+        }
     }
 
     // 지도 초기 설정
@@ -78,8 +113,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 .snippet("대한민국 서울의 시청이다.") // 제목 아래에 표시되는 설명
                 .alpha(0.7f) // 마커 투명도
         )
-        // 특정 좌표로 카메라 이동
-//        googleMap.moveCamera(CameraUpdateFactory.newLatLng(seoul))
         // 카메라 줌 (위 코드와 중첩시 이 코드를 우선)
         googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(seoul, 17f))
     }
@@ -89,37 +122,27 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun addMarkToMyCoo(){
-        if(checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
-            && checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
-            fusedLocationClient.lastLocation
-                .addOnSuccessListener { location : Location? ->
-                    // Got last known location. In some rare situations this can be null.
-                    if (location != null) {
-                        setMyCoo(location.latitude, location.longitude)
+        fusedLocationClient.lastLocation
+            .addOnSuccessListener { location : Location? ->
+                if (location != null) {
+                    setMyCoo(location.latitude, location.longitude)
 
-                        try {
-                            val list = Geocoder(this).getFromLocation(myCoo.latitude, myCoo.longitude, 1)
+                    try {
+                        val list = Geocoder(this).getFromLocation(myCoo.latitude, myCoo.longitude, 1)
 
-                            // 현재 위치 마커 생성
-                            myGoogleMap!!.addMarker(
-                                MarkerOptions()
-                                    .position(myCoo)
-                                    .title("${list[0].adminArea} ${list[0].thoroughfare} ${list[0].postalCode}")
-                            )!!.showInfoWindow()
-                            // 현재 위치로 카메라 이동
-                            myGoogleMap!!.moveCamera(CameraUpdateFactory.newLatLngZoom(myCoo, 17f))
-                        }catch (e: IOException){
-                            Toast.makeText(this, "주소 가져오기 실패", Toast.LENGTH_LONG).show()
-                        }
+                        // 현재 위치 마커 생성
+                        myGoogleMap!!.addMarker(
+                            MarkerOptions()
+                                .position(myCoo)
+                                .title("${list[0].adminArea} ${list[0].thoroughfare} ${list[0].postalCode}")
+                        )!!.showInfoWindow()
+                        // 현재 위치로 카메라 이동
+                        myGoogleMap!!.moveCamera(CameraUpdateFactory.newLatLngZoom(myCoo, 17f))
+                    }catch (e: IOException){
+                        Toast.makeText(this, "주소 가져오기 실패", Toast.LENGTH_LONG).show()
                     }
                 }
-        }else if (checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED){
-            requestPermissions(arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION), 100)
-        }else if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED){
-            requestPermissions(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 200)
-        }else{
-            Toast.makeText(this, "현재 위치 불러오기 실패", Toast.LENGTH_LONG).show()
-        }
+            }
     }
 
     private fun addPolyline(){
@@ -139,13 +162,92 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             CircleOptions()
                 .center(LatLng(35.1542634, 129.1204897))
                 .radius(10000.0)
-        ).strokeColor = Color.parseColor("#0000ff")
+        )
+//            .fillColor = Color.parseColor("#0000ff")
+//            .strokeColor = Color.parseColor("#0000ff")
 
         myGoogleMap!!.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(35.1542634, 129.1204897), 8f))
     }
 
     private fun addPolygon(){
+        myGoogleMap!!.addPolygon(
+            PolygonOptions()
+                .add(
+                    LatLng(35.1542634, 129.1204897),
+                    LatLng(34.7603737, 127.6622221),
+                    LatLng(37.5666805, 126.9784147),
+                    LatLng(37.8813153, 127.7299707),
+                    LatLng(35.1542634, 129.1204897)
+                )
+                .strokeColor(Color.GREEN)
+                .fillColor(Color.LTGRAY)
+        )
+        myGoogleMap!!.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(35.1542634, 129.1204897), 8f))
+    }
+
+    private fun routeStart(){
+        Toast.makeText(this, "경로 저장을 시작합니다.", Toast.LENGTH_LONG).show()
+
+        // moveCooList : MutableList<LatLng> 에 최초 위치 저장
+        // 최초 위치로 출발지점 마커 생성 (파란 동그라미)
+        fusedLocationClient.lastLocation
+            .addOnSuccessListener { location: Location? ->
+                if (location != null) {
+                    // moveCooList : MutableList<LatLng> 에 최초 위치 저장
+                    moveCooList += LatLng(location.latitude, location.longitude)
+
+                    // 최초 위치로 출발지점 마커 생성 (파란 동그라미)
+                    myGoogleMap!!.addMarker(
+                        MarkerOptions()
+                            .position(moveCooList[0])
+                            .icon(BitmapDescriptorFactory.fromResource(R.drawable.circle_blue))
+                    )
+
+                    // 최초 위치로 카메라 이동
+                    myGoogleMap!!.moveCamera(CameraUpdateFactory.newLatLngZoom(moveCooList[0], 17f))
+                }
+            }
+
+        // 3초마다 현재 위치의 좌표를 moveCooList에 저장
+        // 저장하면 i-1번째 좌표, i번째 좌표로 add polyline
+        handler.post(object: Runnable{
+            override fun run(){
+                // 현재 위치의 좌표를 moveCooList에 저장
+                fusedLocationClient.lastLocation
+                    .addOnSuccessListener { location: Location? ->
+                        if (location != null) {
+                            // moveCooList : MutableList<LatLng> 에 최초 위치 저장
+                            moveCooList += LatLng(location.latitude, location.longitude)
+
+                            // 저장하면 i-1번째 좌표, i번째 좌표로 add polyline
+                            myGoogleMap!!.addPolyline(
+                                PolylineOptions()
+                                    .add(moveCooList[0])
+                                    .add(moveCooList[1])
+                            ).color = Color.parseColor("#515151")
+                        }
+                    }
+
+                // 3초마다 반복
+                handler.postDelayed(this, 3000)
+            }
+        })
 
     }
 
+    private fun routePause(){
+        // 일시정지 (3초마다 현재 위치의 좌표를 moveCooList에 저장했던거 정지)
+    }
+
+    private fun routeRestart(){
+        // 3초마다 현재 위치의 좌표를 moveCooList에 저장
+        // 저장하면 i-1번째 좌표, i번째 좌표로 add polyline
+    }
+
+    private fun routeSave(){
+        Toast.makeText(this, "경로 저장을 종료합니다.", Toast.LENGTH_LONG).show()
+
+        // moveCooList 비우기
+        moveCooList.clear()
+    }
 }
