@@ -33,7 +33,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private var myCoo = LatLng(0.0, 0.0)
 
     private var moveCooList : MutableList<LatLng> = mutableListOf()
-    val handler = Handler(Looper.getMainLooper())
+    private val handler = Handler(Looper.getMainLooper())
+    private var firStart = false
+    private var i = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -81,6 +83,14 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
         binding.btnStart.setOnClickListener {
             routeStart()
+        }
+
+        binding.btnPause.setOnClickListener {
+            routePause()
+        }
+
+        binding.btnStop.setOnClickListener {
+            routeStop()
         }
 
     }
@@ -186,27 +196,30 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun routeStart(){
-        Toast.makeText(this, "경로 저장을 시작합니다.", Toast.LENGTH_LONG).show()
+        if(!firStart){
+            Toast.makeText(this, "경로 저장을 시작합니다.", Toast.LENGTH_LONG).show()
+            firStart = true
 
-        // moveCooList : MutableList<LatLng> 에 최초 위치 저장
-        // 최초 위치로 출발지점 마커 생성 (파란 동그라미)
-        fusedLocationClient.lastLocation
-            .addOnSuccessListener { location: Location? ->
-                if (location != null) {
-                    // moveCooList : MutableList<LatLng> 에 최초 위치 저장
-                    moveCooList += LatLng(location.latitude, location.longitude)
+            // moveCooList에 최초 위치 저장
+            // 최초 위치로 출발지점 마커 생성 (파란 동그라미)
+            fusedLocationClient.lastLocation
+                .addOnSuccessListener { location: Location? ->
+                    if (location != null) {
+                        // moveCooList : MutableList<LatLng> 에 최초 위치 저장
+                        moveCooList += LatLng(location.latitude, location.longitude)
 
-                    // 최초 위치로 출발지점 마커 생성 (파란 동그라미)
-                    myGoogleMap!!.addMarker(
-                        MarkerOptions()
-                            .position(moveCooList[0])
-                            .icon(BitmapDescriptorFactory.fromResource(R.drawable.circle_blue))
-                    )
+                        // 최초 위치로 출발지점 마커 생성 (파란 동그라미)
+                        myGoogleMap!!.addMarker(
+                            MarkerOptions()
+                                .position(moveCooList[0])
+                                .icon(BitmapDescriptorFactory.fromResource(R.drawable.circle_blue))
+                        )
 
-                    // 최초 위치로 카메라 이동
-                    myGoogleMap!!.moveCamera(CameraUpdateFactory.newLatLngZoom(moveCooList[0], 17f))
+                        // 최초 위치로 카메라 이동
+                        myGoogleMap!!.moveCamera(CameraUpdateFactory.newLatLngZoom(moveCooList[0], 17f))
+                    }
                 }
-            }
+        }
 
         // 3초마다 현재 위치의 좌표를 moveCooList에 저장
         // 저장하면 i-1번째 좌표, i번째 좌표로 add polyline
@@ -219,11 +232,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                             // moveCooList : MutableList<LatLng> 에 최초 위치 저장
                             moveCooList += LatLng(location.latitude, location.longitude)
 
+                            i += 1
                             // 저장하면 i-1번째 좌표, i번째 좌표로 add polyline
                             myGoogleMap!!.addPolyline(
                                 PolylineOptions()
-                                    .add(moveCooList[0])
-                                    .add(moveCooList[1])
+                                    .add(moveCooList[i-1])
+                                    .add(moveCooList[i])
                             ).color = Color.parseColor("#515151")
                         }
                     }
@@ -232,20 +246,50 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 handler.postDelayed(this, 3000)
             }
         })
-
     }
 
     private fun routePause(){
         // 일시정지 (3초마다 현재 위치의 좌표를 moveCooList에 저장했던거 정지)
+        handler.removeCallbacksAndMessages(null)
     }
 
-    private fun routeRestart(){
-        // 3초마다 현재 위치의 좌표를 moveCooList에 저장
-        // 저장하면 i-1번째 좌표, i번째 좌표로 add polyline
-    }
-
-    private fun routeSave(){
+    private fun routeStop(){
         Toast.makeText(this, "경로 저장을 종료합니다.", Toast.LENGTH_LONG).show()
+        firStart = false
+
+        // 3초마다 현재 위치의 좌표를 moveCooList에 저장했던거 정지
+        handler.removeCallbacksAndMessages(null)
+
+        // 현재 위치에 빨간 마커
+        // add polyline
+        // 현재 위치 moveCooList에 저장
+        fusedLocationClient.lastLocation
+            .addOnSuccessListener { location: Location? ->
+                if (location != null) {
+                    // moveCooList에 마지막 위치 저장
+                    moveCooList += LatLng(location.latitude, location.longitude)
+
+                    // 저장하면 마지막 직전 좌표, 마지막 좌표로 add polyline
+                    myGoogleMap!!.addPolyline(
+                        PolylineOptions()
+                            .add(moveCooList[moveCooList.lastIndex-1])
+                            .add(moveCooList[moveCooList.lastIndex])
+                    ).color = Color.parseColor("#515151")
+
+                    // 최초 위치로 출발지점 마커 생성 (빨간 동그라미)
+                    myGoogleMap!!.addMarker(
+                        MarkerOptions()
+                            .position(moveCooList[moveCooList.lastIndex])
+                            .icon(BitmapDescriptorFactory.fromResource(R.drawable.circle_red))
+                    )
+
+                    // 마지막 위치로 카메라 이동
+                    myGoogleMap!!.moveCamera(CameraUpdateFactory.newLatLngZoom(moveCooList[moveCooList.lastIndex], 17f))
+                }
+            }
+
+        // moveCooList 저장
+
 
         // moveCooList 비우기
         moveCooList.clear()

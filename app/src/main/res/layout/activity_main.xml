@@ -129,7 +129,7 @@
         app:layout_constraintStart_toStartOf="@+id/btn_current_posi" />
 
     <Button
-        android:id="@+id/btn_end"
+        android:id="@+id/btn_stop"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:background="#80000000"
