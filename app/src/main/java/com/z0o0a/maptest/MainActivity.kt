@@ -139,13 +139,19 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
                     try {
                         val list = Geocoder(this).getFromLocation(myCoo.latitude, myCoo.longitude, 1)
+                        val addressSplite = list[0].getAddressLine(0).split(" ")
+                        var address = ""
+                        for (i in 1 until addressSplite.size){
+                            address += addressSplite[i] + " "
+                        }
 
                         // 현재 위치 마커 생성
                         myGoogleMap!!.addMarker(
                             MarkerOptions()
                                 .position(myCoo)
-                                .title("${list[0].adminArea} ${list[0].thoroughfare} ${list[0].postalCode}")
+                                .title(address.substring(0 until  address.lastIndex-1))
                         )!!.showInfoWindow()
+
                         // 현재 위치로 카메라 이동
                         myGoogleMap!!.moveCamera(CameraUpdateFactory.newLatLngZoom(myCoo, 17f))
                     }catch (e: IOException){
@@ -292,6 +298,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
 
         // moveCooList 비우기
-        moveCooList.clear()
+//        moveCooList.clear()
     }
 }
